@@ -1,0 +1,10 @@
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.tabs { display: flex; gap: 4px; }
+.tab { border-radius: 999px; background: transparent; }
+.tab.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.field.row-field { flex-direction: row; }
+tr.bad td { color: var(--danger); }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; background: var(--ok); }
+.dot.outage { background: var(--danger); } .dot.error { background: var(--warn); }
+.card .value small { font-size: 13px; color: var(--muted); font-weight: 400; }
+.card .value.bad { color: var(--danger); } .card .value.warn { color: var(--warn); }

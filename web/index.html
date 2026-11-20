@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="app-token" content="__APP_TOKEN__">
+  <title>SpeedLog</title>
+  <link rel="icon" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="app.css">
+  <script src="core.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="name">SpeedLog</div><p class="subtitle">Internet speed history</p></div>
+      <nav aria-label="Sections"><ul class="nav-list">
+        <li><button type="button" class="nav-btn active" data-view="dash">Dashboard</button></li>
+        <li><button type="button" class="nav-btn" data-view="history">History <span class="count" id="n-tests"></span></button></li>
+        <li><button type="button" class="nav-btn" data-view="settings">Settings</button></li>
+      </ul></nav>
+      <div class="settings-block">
+        <label for="theme">Theme</label>
+        <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="green">Green</option><option value="amber">Amber</option><option value="blue">Blue</option><option value="mono">Mono</option></select>
+      </div>
+    </aside>
+    <main id="main" tabindex="-1">
+      <header class="topbar"><h1 id="view-title">Dashboard</h1><div id="status" class="status" role="status" aria-live="polite"></div></header>
+      <section id="view" class="view">
+
+        <div id="v-dash" class="stack">
+          <div class="toolbar">
+            <button type="button" id="btn-run" class="primary">Run a test now</button>
+            <button type="button" id="btn-stop" hidden>Stop test</button>
+            <span id="run-note" class="muted small"></span>
+            <span class="spacer"></span>
+            <label class="field row-field"><span class="sr-only">Range</span>
+              <select id="range" aria-label="Time range"><option value="day">Last 24 hours</option><option value="week">Last 7 days</option><option value="month">Last 30 days</option></select></label>
+            <a class="button" id="btn-export" href="/api/export.csv" download>Export CSV</a>
+          </div>
+          <div id="banner" class="notice" hidden></div>
+          <div id="cards" class="cards"></div>
+          <div class="panel">
+            <div class="panel-head">
+              <div class="tabs" role="tablist" aria-label="Chart">
+                <button type="button" role="tab" class="tab active" data-metric="down">Download</button>
+                <button type="button" role="tab" class="tab" data-metric="up">Upload</button>
+                <button type="button" role="tab" class="tab" data-metric="lat">Latency &amp; jitter</button>
+              </div>
+              <div id="legend" class="legend"></div>
+            </div>
+            <div class="chart-box"><canvas id="chart" role="img" aria-label="Speed chart"></canvas></div>
+            <p id="chart-note" class="muted small"></p>
+          </div>
+          <div class="panel">
+            <h2>Summary for this range</h2>
+            <div class="table-wrap"><table class="data compact"><thead><tr><th></th><th class="num">Min</th><th class="num">Average</th><th class="num">Max</th></tr></thead><tbody id="stats-rows"></tbody></table></div>
+            <dl class="deflist" id="conn-info"></dl>
+          </div>
+        </div>
+
+        <div id="v-history" class="stack" hidden>
+          <div class="toolbar"><span id="hist-note" class="muted small"></span><span class="spacer"></span><a class="button" href="/api/export.csv" download>Export all as CSV</a></div>
+          <div class="table-wrap"><table class="data"><thead><tr><th>Time</th><th>Result</th><th class="num">Download</th><th class="num">Upload</th><th class="num">Latency</th><th class="num">Jitter</th><th>ISP</th><th>Public IP</th><th>Note</th></tr></thead><tbody id="hist-rows"></tbody></table></div>
+          <div class="toolbar"><button type="button" id="btn-hist-more" hidden>Show older</button></div>
+        </div>
+
+        <div id="v-settings" class="stack" hidden>
+          <div class="panel">
+            <h2>Automatic tests</h2>
+            <div class="row">
+              <label class="field"><span>Test every</span><select id="set-interval"><option value="0">Off (manual only)</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="120">2 hours</option><option value="360">6 hours</option></select></label>
+              <span id="next-run" class="muted small"></span>
+            </div>
+            <p class="muted small">Tests run only while SpeedLog is running (window open or minimized, or in the tray). Each test uses up to about 260 MB of data: up to 200 MB down and 60 MB up, so pick a longer interval on a metered connection.</p>
+          </div>
+          <div class="panel">
+            <h2>Your plan (optional)</h2>
+            <div class="row">
+              <label class="field"><span>Advertised download (Mbps)</span><input type="number" id="set-adv-down" min="0" max="100000" step="1" class="narrow"></label>
+              <label class="field"><span>Advertised upload (Mbps)</span><input type="number" id="set-adv-up" min="0" max="100000" step="1" class="narrow"></label>
+              <button type="button" id="btn-save-adv">Save</button>
+            </div>
+            <p class="muted small">Draws a dashed line on the charts so you can see how far the real speed is from what you pay for. Leave at 0 for no line.</p>
+          </div>
+          <div class="panel">
+            <h2>Running in the background</h2>
+            <label class="check"><input type="checkbox" id="set-keep"> Keep testing in the system tray when I close the window</label>
+            <label class="check"><input type="checkbox" id="set-auto"> Start SpeedLog with Windows (in the tray, no window)</label>
+            <p id="auto-note" class="muted small"></p>
+            <div class="toolbar"><button type="button" id="btn-quit">Quit SpeedLog completely</button></div>
+          </div>
+          <div class="panel">
+            <h2>Data</h2>
+            <p class="muted small">Results are stored on this PC only, in <code>%APPDATA%\SpeedLog</code>. Tests talk to Cloudflare's public speed test servers (no account). Your public IP and ISP name are recorded with each result.</p>
+            <div class="toolbar"><button type="button" id="btn-clear" class="danger">Delete all results…</button></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div id="modal-root"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
